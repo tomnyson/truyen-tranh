@@ -1,11 +1,6 @@
 <!-- pages/index.vue -->
 <script setup lang="ts">
 definePageMeta({ layout: 'default', auth: false, title: 'Trang chủ' })
-
-const { data: posts, pending, error } = await useFetch('/api/posts')
-const { data: categories, status: categoriesStatus, error: categoriesError } = await useFetch('/api/categories')
-const { data: tags, status: tagsStatus, error: tagsError } = await useFetch('/api/tags')
-
 import BannerHome2 from '@/components/BannerHome2.vue'
 import TrendingTopics from '@/components/TrendingTopics.vue'
 import RecentPosts from '@/components/RecentPosts.vue'
@@ -13,11 +8,47 @@ import PopularPosts from '~/components/PopularPosts.vue';
 import Tags from '~/components/Tags.vue';
 import { toast } from 'vue3-toastify';
 
+//refs
+const activeTab = ref('day');
+const postsFilter = ref(null);
+const pendingPostFilterStatus = ref(false);
+const errorFilter = ref(null);
+// fetch api
+const { data: posts, pending, error } = await useFetch('/api/posts')
+const { data: categories, status: categoriesStatus, error: categoriesError } = await useFetch('/api/categories')
+const { data: tags, status: tagsStatus, error: tagsError } = await useFetch('/api/tags')
+
+
+const postsPined = posts.value?.filter((post: any) => post.is_pin === 1);
+const postsRecent = posts.value?.filter((post: any) => post.is_pin !== 1);
 // toast.success('Operation successful!');
+// watch activeTab and refetch data
+
+const fetchPostsFilter = async () => {
+  try {
+    pendingPostFilterStatus.value = true;
+    const queryString = {
+      viewTime: activeTab.value,
+      orderBy: 'views_count',
+      limit: 10,
+    }
+    const { data, error } = await useFetch(`/api/posts?viewTime=${activeTab.value}`);
+    postsFilter.value = data.value;
+    errorFilter.value = error.value;
+  } catch (e) {
+    console.error('Error fetching postsFilter:', e);
+  } finally {
+    pendingPostFilterStatus.value = false;
+  }
+};
+
+watch(activeTab, fetchPostsFilter, { immediate: true });
+
+
 const showToast = () => {
   toast.success('Operation successful!');
 }
-const activeTab = ref('news');
+
 
 const setActiveTab = (tab: string) => {
   activeTab.value = tab;
@@ -27,7 +58,7 @@ const setActiveTab = (tab: string) => {
 
 <template>
   <main class="main">
-    <BannerHome2 />
+    <BannerHome2 :sliders="postsPined" />
     <div class="cover-home3">
       <div class="container">
         <div class="row">
@@ -38,7 +69,7 @@ const setActiveTab = (tab: string) => {
               <p class="text-lg color-gray-500 wow animate__animated animate__fadeInUp">Khám phá những bài viết nổi bật
                 nhất trong mọi chủ đề</p>
               <div class="row mt-70">
-                <RecentPosts :posts="posts" />
+                <RecentPosts :posts="postsRecent" />
               </div>
             </div>
             <h2 class="color-linear d-inline-block mb-10 wow animate__animated animate__fadeInUp">Thẻ phổ biến</h2>
@@ -79,7 +110,7 @@ const setActiveTab = (tab: string) => {
                     </span>
                   </div>
                   <div class="row">
-                    <PopularPosts :posts="posts" />
+                    <PopularPosts :posts="postsFilter" />
                   </div>
                 </div>
                 <div class="text-start mb-80"><a

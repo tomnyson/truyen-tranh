@@ -35,6 +35,7 @@ interface Post {
 definePageMeta({ layout: 'default', auth: false, title: 'Trang chủ' });
 
 const route = useRoute();
+
 const { status, token, data: session } = useAuth();
 const isLoggedIn = computed(() => status.value === 'authenticated');
 const postId = computed(() => route.params.id as string);
@@ -55,7 +56,12 @@ const { handleSubmit, errors, defineField } = useForm({
 
 const [content, contentAttrs] = defineField('content');
 
-const { data: post, pending, error } = await useFetch<Post>(`/api/posts/${postId.value}`);
+const { data: post, pending, error } = await useFetch<Post>(`/api/posts/${postId.value}`, {
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: token.value ? `Bearer ${token.value}` : undefined,
+  },
+});
 
 // URL for comments API
 const url = computed(() => `/api/comments?postId=${postId.value}`);
@@ -69,7 +75,7 @@ const {
 } = await useFetch<Comment[]>(url, {
   headers: {
     'Content-Type': 'application/json',
-    Authorization: token.value ? `Bearer ${token.value}` : undefined,
+    Authorization: token.value ? `${token.value}` : undefined,
   },
 });
 
@@ -178,7 +184,8 @@ const enableRelyModel = (comment) => {
                   >
                 </div>
                 <div class="box-comments border-gray-800">
-                  <h3 class="text-heading-2 color-gray-300">Comments</h3>
+                  <h3 class="text-heading-2 color-gray-300">Bình luận</h3>
+                  <p v-show="comments.length==0" class="no-comment text-xl  mt-5">không có bình luận</p>
                   <div class="list-comments-single" v-for="comment in comments" :key="comment.id">
                     <div class="item-comment" >
                       <div class="comment-left">
@@ -286,5 +293,11 @@ const enableRelyModel = (comment) => {
 <style scoped>
 .image-detail {
   max-width: 250px;
+}
+.no-comment {
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  margin-top: 10px;
 }
 </style>

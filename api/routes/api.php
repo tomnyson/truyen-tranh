@@ -36,9 +36,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/refresh-token', [AuthController::class, 'refreshToken']);
         // Add additional protected routes here
         Route::get('/current-user', [UserController::class, 'currentUser']);
+        Route::post('/profile', [UserController::class, 'updateMyProfile']);
         // Media routes
         Route::get('/media', [MediaController::class, 'index']);
-        Route::post('/media', [MediaController::class, 'store']);  
+        Route::post('/media', [MediaController::class, 'store']);
+        Route::post('/media/upload', [MediaController::class, 'upload']);
         Route::delete('/media/{media}', [MediaController::class, 'destroy']);
         Route::apiResource('packages', PackageController::class);
         Route::apiResource('posts', PostController::class);

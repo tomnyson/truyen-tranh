@@ -9,10 +9,11 @@ export default defineEventHandler(async (event) => {
 
   const query = getQuery(event)
 
-  console.log('query server', query)
+  console.log('query', query)
   const data = await $fetch<PostResponse>(`${config.apiBaseUrl}/api/guest/posts`, {
     params: query
   })
+  console.log('data', data)
 
   return data.data
 })

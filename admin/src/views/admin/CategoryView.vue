@@ -13,6 +13,7 @@
           <th>ID</th>
           <th>Name</th>
           <th>Image</th>
+          <th>description</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -21,8 +22,9 @@
           <td>{{ category.id }}</td>
           <td>{{ category.name }}</td>
           <td>
-            <!-- <img v-show="category.image" :src="category.image" alt="file" style="width: 50px; height: 50px" /> -->
+            <img v-show="category.image !== null" :src="category.image" alt="file" style="width: 50px; height: 50px" />
           </td>
+          <td>{{ category.description }}</td>
           <td>
             <button class="btn btn-danger btn-sm" @click="removeCategory(category)">Delete</button>
             <button class="btn btn-info btn-sm" @click="editCategory(category)">Edit</button>
@@ -30,38 +32,32 @@
         </tr>
       </tbody>
     </table>
-    <nav v-if="pagination.last_page>1" aria-label="Page pagination example">
+    <nav v-if="pagination.last_page > 1" aria-label="Page pagination example">
       <ul v-show="!navigation" class="pagination">
         <li class="page-item">
-          <a class="page-link" href="#" @click.prevent="fetchCategories(pagination.current_page -1)"
-            >Previous</a
-          >
+          <a class="page-link" href="#" @click.prevent="fetchCategories(pagination.current_page - 1)">Previous</a>
         </li>
         <li class="page-item" v-for="page in pagination.last_page" :key="page">
           <a class="page-link" href="#" @click.prevent="fetchCategories(page)">{{ page }}</a>
         </li>
         <li class="page-item">
-          <a class="page-link" href="#" @click.prevent="fetchCategories(pagination.current_page+1)"
-            >Next</a
-          >
+          <a class="page-link" href="#" @click.prevent="fetchCategories(pagination.current_page + 1)">Next</a>
         </li>
       </ul>
     </nav>
-    <Modal
-      v-model="showModal"
-      :title="modalTitle"
-      content="This is a simple modal demonstration!"
-      size="small"
-      :showDefaultActions="true"
-      @confirm="handleConfirm"
-      @close="handleClose"
-    >
+    <Modal v-model="showModal" :title="modalTitle" content="This is a simple modal demonstration!" size="small"
+      :showDefaultActions="true" @confirm="handleConfirm" @close="handleClose">
       <template #default>
         <form @submit.prevent="handleSubmit">
           <div>
             <label for="name">Name</label>
             <input class="form-control" id="name" v-model="name" v-bind="nameAttrs" />
             <span class="text-danger">{{ errors.name }}</span>
+          </div>
+          <div>
+            <label for="name">Description</label>
+            <input class="form-control" id="name" v-model="description" v-bind="descriptionAttrs" />
+            <span class="text-danger">{{ errors.description }}</span>
           </div>
           <div>
             <label for="name">Image</label>
@@ -94,41 +90,40 @@ import { useForm } from "vee-validate";
 import * as yup from "yup";
 
 const categories = ref([]);
-const newCategory = ref('');
-const oldCategory = ref('');
 const showModal = ref(false)
 const loading = ref(false)
 const limit = ref(10)
 const isEditing = ref(false)
 const modalTitle = computed(() => (isEditing.value ? 'Edit Category' : 'Create Category'));
 const selectCategory = ref(null);
-const IMAGE_URL = process.env.VUE_APP_IMAGE_URL;
 
 const pagination = ref({
-        current_page: 1,
-        last_page: 1,
-        next_page_url: null,
-        prev_page_url: null,
-        links: [],
-      })
+  current_page: 1,
+  last_page: 1,
+  next_page_url: null,
+  prev_page_url: null,
+  links: [],
+})
 
 const { handleSubmit, errors, defineField } = useForm({
   validationSchema: yup.object({
-    name: yup.string().required(),
-    image: yup.string(),
+    name: yup.string().required("Name is required."),
+    image: yup.string().nullable().optional().default(null),
+    description: yup.string().nullable().optional().max(255, "Description must be at most 255 characters.").default(null),
   }),
 });
 
 const [name, nameAttrs] = defineField('name');
 const [image, imageAttrs] = defineField('image');
+const [description, descriptionAttrs] = defineField('description');
 
 onMounted(async () => {
   fetchCategories();
 });
 
 const onSubmit = handleSubmit(async (formValues) => {
-  
-  if(isEditing.value) {
+
+  if (isEditing.value) {
     await newService.updateCategory(selectCategory.value.id, formValues);
     await fetchCategories();
     notify({
@@ -143,11 +138,10 @@ const onSubmit = handleSubmit(async (formValues) => {
       text: "Category added successfully!",
     });
   }
-   resetForm();
+  resetForm();
 });
 
 const removeCategory = async (category) => {
-  console.log(category.id)
   if (confirm(`Are you sure you want to delete "${category.name}"?`)) {
     await newService.deleteCategory(category.id);
     await fetchCategories();
@@ -162,6 +156,8 @@ const editCategory = async (category) => {
   isEditing.value = true;
   selectCategory.value = category;
   name.value = category.name;
+  description.value = category.description;
+  image.value = category.image;
   showModal.value = true;
 };
 
@@ -187,9 +183,12 @@ const fetchCategories = async (page) => {
 
 const resetForm = () => {
   name.value = '';
+  description.value = '';
+  image.value = '';
   isEditing.value = false;
   selectCategory.value = null;
   showModal.value = false;
+
 
 }
 

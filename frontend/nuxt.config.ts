@@ -21,9 +21,7 @@ export default defineNuxtConfig({
 
   plugins: ['~/plugins/toast.ts'],
 
-  modules: [
-    '@sidebase/nuxt-auth',
-  ],
+  modules: ['@sidebase/nuxt-auth', '@nuxt/icon'],
   auth: {
     globalAppMiddleware: true,
     enableGlobalAppMiddleware: true,

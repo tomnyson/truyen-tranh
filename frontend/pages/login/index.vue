@@ -25,27 +25,8 @@ const onSubmit = handleSubmit(async (formValues) => {
   try {
     const res = await signIn(
         { ...formValues },
-        { callbackUrl: '/home' } // Where the user will be redirected after a successiful login
+        { callbackUrl: '/' } // Where the user will be redirected after a successiful login
       )
-    console.log('Login successful:', res);
-    // const response = await fetch('/api/login', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(formValues),
-    // });
-
-    // if (!response.ok) {
-    //   const errorData = await response.json();
-    //   throw new Error(errorData.message || 'An error occurred during login.');
-    // }
-    // const data = await response.json();
-
-    // console.log('Login successful:', data);
-    // localStorage.setItem('authToken', data.access_token);
-    //   toast.success('Login successful!');
-    //   await sleep(2000);
     router.push('/');
 
     // Handle success (e.g., redirect or store user data)
@@ -63,7 +44,7 @@ const onSubmit = handleSubmit(async (formValues) => {
         <div class="row">
           <div class="col-xl-10 col-lg-12 m-auto">
             <div class="text-center mt-50 pb-50">
-              <h2 class="color-linear d-inline-block">Welcome back !</h2>
+              <h2 class="color-linear d-inline-block">Chào mừng trở lại!</h2>
             </div>
             <div class="box-form-login pb-50">
               <div class="form-login bg-gray-850 border-gray-800 text-start">
@@ -89,18 +70,18 @@ const onSubmit = handleSubmit(async (formValues) => {
                     <span class="text-danger">{{ errors.password }}</span>
                   </div>
                   <div class="form-group">
-                    <a class="color-white link" href="#">Forgot password?</a>
+                    <a class="color-white link" href="#">Quên mật khẩu?</a>
                   </div>
                   <div class="form-group">
                     <input
                       class="btn btn-linear color-gray-850 hover-up"
                       type="submit"
-                      value="Log me in"
+                      value="Đăng nhập cho tôi"
                     />
                   </div>
                   <div class="form-group mb-0">
-                    <span>Don’t have an account?</span>
-                    <NuxtLink class="color-linear" to="/register"> Sign Up</NuxtLink>
+                    <span>Bạn chưa có tài khoản?</span>
+                    <NuxtLink class="color-linear" to="/register"> Đăng ký</NuxtLink>
                   </div>
                 </form>
               </div>

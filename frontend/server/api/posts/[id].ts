@@ -12,7 +12,15 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Fetch the post from the external API
-    const post = await $fetch(`${config.apiBaseUrl}/api/guest/posts/${id}`);
+    const headers = getHeaders(event);
+    const requestHeaders: HeadersInit = {};
+    if (headers.authorization) {
+      requestHeaders.Authorization = headers.authorization;
+    }
+    const post = await $fetch(`${config.apiBaseUrl}/api/guest/posts/${id}`,{
+      method: 'GET',
+      headers: requestHeaders
+    });
 
     if (!post) {
       return {

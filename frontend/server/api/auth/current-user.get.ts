@@ -8,7 +8,7 @@ export default defineEventHandler(async (event): Promise<any> => {
 
     const { data } = await axios.get(`${config.apiBaseUrl}/api/current-user`, {
       headers: {
-        Authorization: headers.authorization, // Forward the Authorization token if available
+        Authorization: headers.authorization,
       },
     });
 

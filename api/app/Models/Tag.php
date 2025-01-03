@@ -8,7 +8,7 @@ class Tag extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'image'];
+    protected $fillable = ['name', 'image', 'description'];
 
     public function posts()
     {

@@ -19,6 +19,7 @@
         <div class="row mt-20">
           <div class="col-12">
             <span class="calendar-icon color-gray-700 text-sm mr-25">{{ formatDate(item.created_at) }}</span>
+            <span class="eye-icon color-gray-700 text-sm mr-25">lượt xem: {{ item.views_count }}</span>
           </div>
         </div>
       </div>
@@ -39,16 +40,21 @@ interface Post {
   id: number
   title: string
   content: string
-  created_at: string
+  created_at: string,
+  views_count: number,
   image: string
   tags: Tag[]
 }
 
 const props = defineProps<{
   posts: Post[]
-}>()  
+}>()
 
-const popularPosts = computed(() => props.posts.slice(0, 10))
+const popularPosts = computed(() => {
+  // Safely handle cases where props.posts might be undefined or null
+  return (props.posts || []).slice(0, 5);
+});
+
 </script>
 
 <style scoped>

@@ -144,4 +144,50 @@ class UserController extends Controller
         'authors' => $authors,
     ]);
 }
+
+public function updateMyProfile(Request $request)
+{
+    // Get the currently authenticated user
+    $user = $request->user();
+    if (!$user) {
+        return response()->json(['error' => 'User not found'], 404);
+    }
+
+    // Validate the incoming request data
+    $validatedData = $request->validate([
+        'name' => 'nullable|string|max:255',
+        'password' => 'nullable|min:8',
+        'password_confirmation' => 'nullable|same:password',
+        'intro' => 'nullable|string|max:255',
+        'social' => 'nullable|json',
+        'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+    ]);
+
+    // Update password if provided
+    if (!empty($validatedData['password'])) {
+        $user->password = Hash::make($validatedData['password']);
+    }
+
+
+    // Handle avatar file upload
+    if ($request->hasFile('avatar')) {
+        // Store the uploaded file in the 'images' directory under 'public' disk
+        $imagePath = $request->file('avatar')->store('images', 'public');
+        $user->avatar = $imagePath;
+    }
+
+    // Update other fields
+    $user->name = $validatedData['name'];
+    $user->intro = $validatedData['intro'] ?? $user->intro; // Keep existing value if not provided
+    $user->social = $validatedData['social'] ?? $user->social;
+
+    // Save the updated user
+    $user->save();
+
+    // Return the updated user data
+    return response()->json([
+        'message' => 'User updated successfully',
+        'user' => $user->only(['id', 'name', 'email', 'role', 'intro', 'social', 'avatar'])
+    ]);
+}
 }

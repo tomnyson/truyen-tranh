@@ -57,7 +57,7 @@ watch(
                   <div class="d-inline-block position-relative">
                     <h1 class="color-white mb-10 color-linear wow animate__animated animate__fadeIn">{{ posts[0]?.category?.name }}</h1>
                   </div>
-                  <p class="color-gray-500 text-base mb-20 wow animate__animated animate__fadeIn">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla convallis nisi sed turpis<br class="d-none d-lg-block">vulputate viverra. Morbi ligula elit, hendrerit non nisl tincidunt, sodales consequat magna.</p>
+                  <p class="color-gray-500 text-base mb-20 wow animate__animated animate__fadeIn">{{ posts[0]?.category?.description }}</p>
                 </div>
                 <div class="col-lg-12 text-center">
                   <div class="box-breadcrumbs wow animate__animated animate__fadeIn">

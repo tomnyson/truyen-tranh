@@ -73,4 +73,23 @@ class MediaController extends Controller
             'message' => 'Media deleted successfully',
         ], 200);
     }
+
+    public function upload(Request $request)
+    {
+        if ($request->hasFile('file')) {
+            $uploadedFile = $request->file('file');
+    
+            $path = $uploadedFile->store('uploads', 'public');
+    
+            $url = Storage::url($path);
+            
+            
+    
+            return response()->json([
+                'location' => $url,
+            ]);
+        }
+    
+        return response()->json(['error' => 'No file found'], 400);
+    }
 }

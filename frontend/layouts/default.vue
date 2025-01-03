@@ -29,12 +29,13 @@ useHead({
 
 // Fetch categories data
 const {data: categories} = await useFetch('/api/categories');
+const { data: settings, status: settingStatus, error: settingError } = await useFetch('/api/settings')
 </script>
 
 
 <template>
   <!-- Pass categories to Header and Footer if available -->
-  <Header :data="categories" />
+  <Header :data="categories" :settings="settings" />
   <!-- Slot for dynamic content -->
   <slot />
   <!-- {{ response }} -->

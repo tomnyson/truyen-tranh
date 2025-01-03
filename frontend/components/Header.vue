@@ -11,13 +11,12 @@
   <header class="header sticky-bar">
     <div class="container">
       <div class="row align-items-start">
-        <div class="col-xl-1"></div>
         <div class="col-xl-10 col-lg-12">
           <div class="main-header">
             <div class="header-logo">
               <NuxtLink class="d-flex" to="/"><img class="logo-night" alt="GenZ"
-                  src="assets/imgs/template/logo.svg"><img class="d-none logo-day" alt="GenZ"
-                  src="assets/imgs/template/logo-day.svg"></NuxtLink>
+                  :src="logo"><img class="d-none logo-day" alt="GenZ"
+                  :src="logo"></NuxtLink>
             </div>
             <div class="header-nav">
               <nav class="nav-main-menu d-none d-xl-block">
@@ -33,7 +32,6 @@
                       </li>
                     </ul>
                   </li>
-                  <li><a class="color-gray-500" href="page-contact.html">Contact</a></li>
 
                   <li v-show="isLoggedIn" class="has-children"><a class="color-gray-500" href="#">Xin chào: {{
                       session?.user?.name }}</a>
@@ -79,35 +77,22 @@
   <div class="mobile-header-active mobile-header-wrapper-style perfect-scrollbar bg-gray-900">
     <div class="mobile-header-wrapper-inner">
       <div class="mobile-header-content-area">
-        <div class="mobile-logo border-gray-800"><a class="d-flex" href="index.html"><img class="logo-night" alt="GenZ"
+        <div class="mobile-logo border-gray-800"><NuxtLink class="d-flex" to="/"><img class="logo-night" alt="GenZ"
               src="assets/imgs/template/logo.svg"><img class="d-none logo-day" alt="GenZ"
-              src="assets/imgs/template/logo-day.svg"></a></div>
+              :src="logo"></NuxtLink></div>
         <div class="perfect-scroll">
           <div class="mobile-menu-wrap mobile-header-border">
             <nav class="mt-15">
               <ul class="mobile-menu font-heading">
-                <li class="has-children"><a href="index.html">Home</a>
-                  <ul class="sub-menu">
-                    <li><a href="index.html">Homepage - 1</a></li>
-                    <li><a href="index-2.html">Homepage - 2</a></li>
-                    <li><a href="index-3.html">Homepage - 3</a></li>
-                    <li><a href="index-4.html">Homepage - 4</a></li>
-                  </ul>
+                <li class="has-children"><NuxtLink to="/">Trang chủ</NuxtLink>
                 </li>
-                <li class="has-children"><a href="#">Category</a>
+                <li class="has-children"><a href="#">Danh mục</a>
                   <ul class="sub-menu">
                     <li><a href="blog-archive.html">Blog Category 1</a></li>
                     <li><a href="blog-archive-2.html">Blog Category 2</a></li>
                     <li><a href="blog-archive-3.html">Blog Category 3</a></li>
                     <li><a href="blog-archive-4.html">Blog Category 4</a></li>
                     <li><a href="blog-archive-5.html">Blog Category 5</a></li>
-                  </ul>
-                </li>
-                <li class="has-children"><a href="#">Single Post</a>
-                  <ul class="sub-menu">
-                    <li><a href="single-sidebar.html">Blog Single 1</a></li>
-                    <li><a href="single-no-sidebar.html">Blog Single 2</a></li>
-                    <li><a href="single-center.html">Blog Single 3</a></li>
                   </ul>
                 </li>
                 <li class="has-children"><a class="color-gray-500" href="page-portfolio.html">Portfolio</a>
@@ -180,30 +165,37 @@ interface Category {
   name: string;
   image?: string;
 }
+
+interface Setting {
+  key: string;
+  value: string;
+}
+
 const props = defineProps<{
   data: Array<Category>;
+  settings: Setting[];
 }>();
 
 const categories = computed(() => props.data ?? []);
 const search = ref('');
 const router = useRouter();
 const { status, data: session, signOut } = useAuth();
+const LOGO_KEY = 'LOGO';
 const isLoggedIn = computed(() => status.value === 'authenticated');
+const logo = props.settings?.filter(setting => setting.key === LOGO_KEY)[0]?.value || 'assets/imgs/template/logo.svg';
 
 useHead({
-  title: 'GenZ - Personal Blog Template',
+  title: 'news truyên tranh',
   meta: [
     {
       name: 'description',
-      content: 'GenZ - Personal Blog Template'
+      content: 'news truyên tranh'
     }
   ]
 });
 
 watchEffect(() => {
-  console.log('Auth status:', status.value);
   if (isLoggedIn.value) {
-    // console.log('User is logged in:', session?.value?.user);
     console.log('User is logged in', JSON.stringify(session.value));
   } else {
     console.log('User is not logged in');

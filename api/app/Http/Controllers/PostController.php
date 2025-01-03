@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Models\PostViewHistory;
+use Carbon\Carbon;
+
 
 class PostController extends Controller
 {
@@ -36,54 +39,85 @@ class PostController extends Controller
     public function getPosts(Request $request)
     {
         try {
-            $query = Post::with('category', 'tags', 'user')->orderBy('created_at', 'desc');
-            $user = $request->user();
-            // Filter by category ID if provided
+            // Base query
+            $query = Post::with('category', 'tags', 'user')
+                ->withCount('views');
+    
+            // Apply filters
             if ($request->filled('categoryId')) {
                 $query->where('category_id', $request->input('categoryId'));
             }
-
-            // Filter by tag ID if provided
+    
             if ($request->filled('tagId')) {
                 $tagId = $request->input('tagId');
                 $query->whereHas('tags', function ($q) use ($tagId) {
                     $q->where('tags.id', $tagId);
                 });
             }
-
-            // Filter by user ID if provided
+    
             if ($request->filled('userId')) {
                 $query->where('user_id', $request->input('userId'));
             }
-
-            // Filter by keyword if provided
+    
             if ($request->filled('keyword')) {
                 $keyword = $request->input('keyword');
                 $query->where('title', 'LIKE', '%' . $keyword . '%');
             }
-            // filter by type if provided
+    
             if ($request->filled('type')) {
-                $type = $request->input('type');
-                $query->where('type', $type);
+                $query->where('type', $request->input('type'));
             }
-            // filter by limit if provided
+    
             if ($request->filled('limit')) {
                 $limit = $request->input('limit');
                 $query->limit($limit);
             }
-
-            // filter by order if provided
-            if ($request->filled('order')) {
-                $order = $request->input('order');
-                $query->orderBy('created_at', $order);
+    
+            if ($request->filled('is_pin')) {
+                $query->where('is_pin', $request->input('is_pin'));
             }
-
-            
-
+    
+            if ($request->filled('orderBy')) {
+                $orderBy = $request->input('orderBy');
+                $orderDirection = $request->input('orderDirection', 'desc'); // Default to descending order
+    
+                if ($orderBy === 'views') {
+                    $query->orderBy('views_count', $orderDirection); // Order by view count
+                } elseif ($orderBy === 'created_at') {
+                    $query->orderBy('created_at', $orderDirection); // Order by creation date
+                }
+            }
+    
             // Retrieve the posts
             $posts = $query->get();
-
-
+    
+            // Filter views by time (day, week, month, all)
+            if ($request->filled('viewTime')) {
+                $viewTime = $request->input('viewTime');
+                $postIds = $posts->pluck('id');
+    
+                // Query view counts for all posts at once
+                $viewsQuery = PostViewHistory::selectRaw('post_id, COUNT(*) as views_count')
+                    ->whereIn('post_id', $postIds)
+                    ->groupBy('post_id');
+    
+                if ($viewTime === 'day') {
+                    $viewsQuery->whereDate('viewed_at', now()->toDateString());
+                } elseif ($viewTime === 'week') {
+                    $viewsQuery->whereBetween('viewed_at', [now()->startOfWeek(), now()->endOfWeek()]);
+                } elseif ($viewTime === 'month') {
+                    $viewsQuery->whereMonth('viewed_at', now()->month)
+                        ->whereYear('viewed_at', now()->year);
+                }
+    
+                $viewCounts = $viewsQuery->get()->keyBy('post_id');
+    
+                // Assign view counts to posts
+                foreach ($posts as $post) {
+                    $post->views_count = $viewCounts->get($post->id)->views_count ?? 0;
+                }
+            }
+    
             return response()->json([
                 'message' => 'Posts retrieved successfully',
                 'data' => $posts,
@@ -99,6 +133,11 @@ class PostController extends Controller
     public function store(Request $request)
     {
         try {
+
+            $request->merge([
+                'is_pin' => filter_var($request->is_pin, FILTER_VALIDATE_BOOLEAN)
+            ]);
+
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
@@ -153,61 +192,61 @@ class PostController extends Controller
     }
 
     public function update(Request $request, Post $post)
-{
-    try {
-        // var_dump($request->all());
-        $request->merge([
-            'is_pin' => filter_var($request->is_pin, FILTER_VALIDATE_BOOLEAN)
-        ]);
+    {
+        try {
+            // var_dump($request->all());
+            $request->merge([
+                'is_pin' => filter_var($request->is_pin, FILTER_VALIDATE_BOOLEAN)
+            ]);
 
-        $validated = $request->validate([
-            'title' => 'string|max:255',
-            'content' => 'required|string',
-            'category_id' => 'required|string|exists:categories,id',
-            'tags' => 'array',
-            'tags.*' => 'exists:tags,id',
-            "image" => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'meta_title' => 'nullable|string|max:60',
-            'meta_description' => 'nullable|string|max:160',
-            'meta_keywords' => 'nullable|string|max:255',
-            'is_pin' => 'required|boolean',
-            'status' => 'required|in:draft,review,published',
-        ]);
-        $user = $request->user();
-        $validated['user_id'] = $user->id;
+            $validated = $request->validate([
+                'title' => 'string|max:255',
+                'content' => 'required|string',
+                'category_id' => 'required|string|exists:categories,id',
+                'tags' => 'array',
+                'tags.*' => 'exists:tags,id',
+                "image" => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'meta_title' => 'nullable|string|max:60',
+                'meta_description' => 'nullable|string|max:160',
+                'meta_keywords' => 'nullable|string|max:255',
+                'is_pin' => 'required|boolean',
+                'status' => 'required|in:draft,review,published',
+            ]);
+            $user = $request->user();
+            $validated['user_id'] = $user->id;
 
-        if ($request->hasFile('image')) {
-            // Delete the old image if exists
-            if ($post->image) {
-                Storage::delete('public/' . $post->image);
+            if ($request->hasFile('image')) {
+                // Delete the old image if exists
+                if ($post->image) {
+                    Storage::delete('public/' . $post->image);
+                }
+
+                $imagePath = $request->file('image')->store('images', 'public');
+                $validated['image'] = $imagePath;
             }
 
-            $imagePath = $request->file('image')->store('images', 'public');
-            $validated['image'] = $imagePath;
+            $post->update($validated);
+
+            if ($request->has('tags')) {
+                $post->tags()->sync($request->tags);
+            }
+
+            return response()->json([
+                'message' => 'Post updated successfully',
+                'data' => $post->load('category', 'tags'),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while updating the post',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        $post->update($validated);
-
-        if ($request->has('tags')) {
-            $post->tags()->sync($request->tags);
-        }
-
-        return response()->json([
-            'message' => 'Post updated successfully',
-            'data' => $post->load('category', 'tags'),
-        ]);
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        return response()->json([
-            'message' => 'Validation error',
-            'errors' => $e->errors(),
-        ], 422);
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'An error occurred while updating the post',
-            'error' => $e->getMessage(),
-        ], 500);
     }
-}
 
     public function destroy(Post $post)
     {
@@ -219,21 +258,31 @@ class PostController extends Controller
     {
         try {
             $post = Post::with('category', 'tags', 'user')->find($id);
-    
+
             if (!$post) {
                 return response()->json(['message' => 'Post not found'], 404);
             }
+            // dd($request->headers->all());
+            $ipAddress = $request->ip();
+            $userAgent = $request->header('user-agent');
+            $user = $request->user();
 
-            $clientIp = $request->ip();
-            $cacheKey = "post_views_{$id}_{$clientIp}";
-            $cacheTTL = 3600;
-            if (!cache()->has($cacheKey)) {
-                $post->increment('views');
-                cache()->put($cacheKey, true, $cacheTTL);
+            $existingView = PostViewHistory::where('post_id', $id)
+                ->where('ip_address', $ipAddress)
+                ->where('user_agent', $userAgent)
+                ->where('viewed_at', '>', Carbon::now()->subHour())
+                ->exists();
+
+            if (!$existingView) {
+                PostViewHistory::create([
+                    'post_id' => $id,
+                    'user_id' => $user->id ?? null,
+                    'ip_address' => $ipAddress,
+                    'user_agent' => $userAgent,
+                    'viewed_at' => now(),
+                ]);
             }
-    
-    
-          
+
             $isBookmarked = false;
             $bookmarkId = null;
             if ($user = $request->user()) {
@@ -242,10 +291,10 @@ class PostController extends Controller
                     $bookmarkId = $user->bookmarks()->where('post_id', $id)->first()->id;
                 }
             }
-    
+
             $post->isBookmarked = $isBookmarked;
             $post->bookmarkId = $bookmarkId;
-    
+
             return response()->json($post, 200);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 500);

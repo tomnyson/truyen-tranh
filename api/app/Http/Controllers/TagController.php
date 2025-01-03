@@ -19,6 +19,7 @@ class TagController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|unique:tags|max:255',
+                'description' => 'nullable|string|unique:categories|max:255',
                 'image' => 'nullable|string|max:255',
             ]);
             return Tag::create($validated);
@@ -36,6 +37,7 @@ class TagController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string',
+            'description' => 'nullable|string|unique:categories|max:255',
             'image' => 'nullable|string|max:255',
         ]);
 

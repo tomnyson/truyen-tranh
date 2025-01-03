@@ -12,7 +12,6 @@ const {userId} =  route.query
 
 const { data: posts, pending, error } =  await useFetch(`/api/posts?userId=${userId}`);
 const { data: author, pending: userPending} = await useFetch(`/api/authors/${userId}`);
-console.log(author.value)
 </script>
 
 <template>

@@ -13,6 +13,7 @@
           <th>ID</th>
           <th>Name</th>
           <th>Image</th>
+          <th>Description</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -23,6 +24,7 @@
           <td>
             <img v-show="tag.image !== null" :src="tag.image" alt="file" style="width: 50px; height: 50px" />
           </td>
+          <td>{{ tag.description }}</td>
           <td>
             <button class="btn btn-danger btn-sm" @click="removeTag(tag)">Delete</button>
             <button style="margin-left: 5px" class="btn btn-info btn-sm" @click="editTag(tag)">Edit</button>
@@ -30,32 +32,31 @@
         </tr>
       </tbody>
     </table>
-    <nav v-if="pagination.last_page>1" aria-label="Page pagination example">
+    <nav v-if="pagination.last_page > 1" aria-label="Page pagination example">
       <ul v-show="!navigation" class="pagination">
         <li class="page-item">
-          <a class="page-link" href="#"  @click.prevent="fetchTags(pagination.current_page -1)">Previous</a>
+          <a class="page-link" href="#" @click.prevent="fetchTags(pagination.current_page - 1)">Previous</a>
         </li>
         <li class="page-item" v-for="page in pagination.last_page" :key="page">
           <a class="page-link" href="#" @click.prevent="fetchTags(page)">{{ page }}</a>
         </li>
-        <li class="page-item"><a class="page-link" href="#" @click.prevent="fetchTags(pagination.current_page+1)">Next</a></li>
+        <li class="page-item"><a class="page-link" href="#"
+            @click.prevent="fetchTags(pagination.current_page + 1)">Next</a></li>
       </ul>
     </nav>
-    <Modal
-      v-model="showModal"
-      :title="modalTitle"
-      content="This is a simple modal demonstration!"
-      size="medium"
-      :showDefaultActions="true"
-      @confirm="handleConfirm"
-      @close="handleClose"
-    >
+    <Modal v-model="showModal" :title="modalTitle" content="This is a simple modal demonstration!" size="medium"
+      :showDefaultActions="true" @confirm="handleConfirm" @close="handleClose">
       <template #default>
         <form @submit.prevent="handleSubmit">
           <div>
             <label for="name">Name</label>
             <input class="form-control" id="name" v-model="name" v-bind="nameAttrs" />
             <span class="text-danger">{{ errors.name }}</span>
+          </div>
+          <div>
+            <label for="name">Description</label>
+            <input class="form-control" id="name" v-model="description" v-bind="descriptionAttrs" />
+            <span class="text-danger">{{ errors.description }}</span>
           </div>
           <div>
             <label for="name">Image</label>
@@ -89,7 +90,6 @@ import * as yup from "yup";
 
 const tags = ref([]);
 const newTag = ref('');
-const oldTag = ref('');
 const showModal = ref(false)
 const loading = ref(false)
 const limit = ref(10)
@@ -99,22 +99,24 @@ const selectedTag = ref(null);
 
 
 const pagination = ref({
-        current_page: 1,
-        last_page: 1,
-        next_page_url: null,
-        prev_page_url: null,
-        links: [],
-      })
+  current_page: 1,
+  last_page: 1,
+  next_page_url: null,
+  prev_page_url: null,
+  links: [],
+})
 
 const { handleSubmit, errors, defineField } = useForm({
   validationSchema: yup.object({
-    name: yup.string().required(),
-    image: yup.string(),
+    name: yup.string().required("Name is required."),
+    image: yup.string().nullable().optional().default(null),
+    description: yup.string().nullable().optional().max(255, "Description must be at most 255 characters.").default(null),
   }),
 });
 
 const [name, nameAttrs] = defineField('name');
 const [image, imageAttrs] = defineField('image');
+const [description, descriptionAttrs] = defineField('description');
 
 onMounted(async () => {
   fetchTags();
@@ -158,6 +160,8 @@ const editTag = async (tag) => {
   showModal.value = true;
   selectedTag.value = tag;
   name.value = tag.name;
+  description.value = tag.description;
+  image.value = tag.image;
 };
 
 const handleClose = () => {
@@ -184,6 +188,8 @@ const fetchTags = async (page) => {
 
 const resetForm = () => {
   name.value = '';
+  description.value = '';
+  image.value = '';
   isEditing.value = false;
   selectedTag.value = null;
   showModal.value = false;
