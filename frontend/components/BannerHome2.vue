@@ -6,8 +6,9 @@
           <div class="col-sm-10">
             <div class="card-style-1 hover-up mb-30 wow animate__animated animate__fadeIn" data-wow-delay=".0s">
               <div class="card-image">
-                <NuxtLink class="post-type" :to="`/blogs?categoryId=${slide.category.id}`"></NuxtLink><NuxtLink class="link-post" :to="`/blogs/${slide.id}`"><img
-                    :src="getMedia(slide.image)" alt="Genz" />
+                <NuxtLink class="post-type" :to="`/blogs?categoryId=${slide.category.id}`"></NuxtLink><NuxtLink class="link-post" :to="`/blogs/${slide.id}`">
+                  <img
+                    :src="getMedia(apiBaseUrl, slide.image)" alt="Genz" />
                   <div class="card-info card-bg-2">
                     <div class="info-bottom mb-15">     
                       <h4 class="color-white mb-15">{{ slide.title }}</h4>
@@ -32,7 +33,9 @@
 
 <script setup lang="ts">
 import { Swiper, SwiperSlide } from 'swiper/vue';
-  import {formatDate, getMedia} from '@/utils/index'
+import {formatDate, getMedia} from '@/utils/index'
+const config = useRuntimeConfig();
+const apiBaseUrl = config.public.apiBaseUrl;
 
 interface Tag {
     id: number
@@ -83,5 +86,10 @@ const props = defineProps < {
 
 .slider {
   padding-top: 50px;
+}
+.card-style-1 .card-image img {
+    width: 100%;
+    border-radius: 8px;
+    height: 300px !important;
 }
 </style>

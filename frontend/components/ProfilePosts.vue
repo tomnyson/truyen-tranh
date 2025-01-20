@@ -15,7 +15,7 @@
           <tr v-for="(recentPost, index) in recentPosts" :key="recentPost.id">
             <td>{{ index + 1 }}</td>
             <td class="color-linear">
-              <img :src="getMedia(recentPost.image)" alt="Post Image" class="img-thumbnail" style="width: 100px; height: auto;" />
+              <img :src="getMedia(apiBaseUrl, recentPost.image)" alt="Post Image" class="img-thumbnail" style="width: 100px; height: auto;" />
             </td>
             <td class="color-linear">{{ recentPost.title || 'No title' }}</td>
             <td class="color-linear">{{ recentPost.user.name }}</td>
@@ -33,7 +33,9 @@
   
   <script setup lang="ts">
   import { formatDate, getMedia } from '@/utils/index';
-  
+  const config = useRuntimeConfig();
+  const apiBaseUrl = config.public.apiBaseUrl;
+
   interface Tag {
     id: number;
     name: string;

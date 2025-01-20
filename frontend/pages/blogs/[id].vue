@@ -1,10 +1,12 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { getMedia, formatDate } from '@/utils/index';
-import { useAuth } from '#imports'; 
+import { useAuth } from '#imports';
 import { useForm } from "vee-validate";
 import * as yup from "yup";
 import { toast } from 'vue3-toastify';
+const config = useRuntimeConfig();
+const apiBaseUrl = config.public.apiBaseUrl;
 
 interface Category {
   id: number;
@@ -48,6 +50,24 @@ const { handleSubmit, errors, defineField } = useForm({
   }),
 });
 
+
+// Function to handle the Esc key
+const handleEscKey = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    reply.value = false;
+    selectedComment.value = null;
+  }
+};
+
+// Add and remove the event listener
+onMounted(() => {
+  window.addEventListener('keydown', handleEscKey);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscKey);
+});
+
 // const { handleSubmit: handleSubmitReply, errors: errorReply, defineField: defineFieldReply } = useForm({
 //   validationSchema: yup.object({
 //     content: yup.string().required('Nội dung không được để trống'),
@@ -67,10 +87,10 @@ const { data: post, pending, error } = await useFetch<Post>(`/api/posts/${postId
 const url = computed(() => `/api/comments?postId=${postId.value}`);
 
 // Fetch comments
-const { 
-  data: comments, 
-  pending: isPending, 
-  error: errorComment, 
+const {
+  data: comments,
+  pending: isPending,
+  error: errorComment,
   refresh
 } = await useFetch<Comment[]>(url, {
   headers: {
@@ -93,7 +113,7 @@ const onSubmit = handleSubmit(async (formValues) => {
     if(selectedComment.value) {
       payload.parent_id = selectedComment.value.id;
     }
-   
+
 
     // Post the comment
     const response = await useFetch(`/api/comments`, {
@@ -129,8 +149,21 @@ useHead({
 const enableRelyModel = (comment) => {
   reply.value = !reply.value;
   selectedComment.value = comment;
+
+  if (reply.value && comment && comment.user && comment.user.name) {
+    content.value = `@${comment.user.name} `;
+  } else {
+    content.value = ''; // Clear the content when toggling off
+  }
 };
 
+const commentsToShow = ref(2);
+const totalComments = computed(() => comments.value.length);
+
+const loadMoreComments = () => {
+  commentsToShow.value += 10; // Increment the number of comments shown
+};
+const shareUrl = computed(() => `${window.location.origin}/blog/${postId.value}`);
 </script>
 
 <template>
@@ -144,7 +177,6 @@ const enableRelyModel = (comment) => {
               <div class="box-breadcrumbs">
                 <ul class="breadcrumb">
                   <li><a class="home" href="index.html">Home</a></li>
-                  <li><a href="blog-archive.html">Blog</a></li>
                   <li>
                     <span>{{ post?.title || 'unknow' }}</span>
                   </li>
@@ -155,18 +187,23 @@ const enableRelyModel = (comment) => {
               <div class="col-lg-6">
                 <h2 class="color-linear mb-30">{{ post?.title || 'unknow' }}</h2>
                 <div class="box-author mb-20">
-                  <img src="assets/imgs/page/about/author2.png" alt="Genz" />
+                  <img :src="getMedia(apiBaseUrl, post?.user?.avatar)" alt="Genz" />
                   <div class="author-info">
                     <h6 class="color-gray-700">{{ post?.user?.name }}</h6>
                     <span
                       class="color-gray-700 text-sm mr-30"
                       >{{ formatDate(post?.created_at) }}</span
-                    ><span class="color-gray-700 text-sm">3 mins to read</span>
+                    >
+                    <!--<span class="color-gray-700 text-sm">3 mins to read</span>-->
                   </div>
                 </div>
               </div>
               <div class="col-lg-6">
-                <img class="img-bdrd-16 image-detail" :src="getMedia(post?.image)" alt="Genz" />
+                <img
+                  class="img-bdrd-16 image-detail"
+                  :src="getMedia(apiBaseUrl, post?.image)"
+                  alt="Genz"
+                />
               </div>
             </div>
             <div class="row mt-50">
@@ -184,102 +221,135 @@ const enableRelyModel = (comment) => {
                   >
                 </div>
                 <div class="box-comments border-gray-800">
-                  <h3 class="text-heading-2 color-gray-300">Bình luận</h3>
-                  <p v-show="comments.length==0" class="no-comment text-xl  mt-5">không có bình luận</p>
-                  <div class="list-comments-single" v-for="comment in comments" :key="comment.id">
-                    <div class="item-comment" >
+                  <div class="box-form-comments mb-50" v-show="isLoggedIn">
+                    <h4 class="text-heading-4 color-gray-300 mb-40">Để lại bình luận</h4>
+                    <div class="box-forms">
+                      <form @submit.prevent="onSubmit">
+                        <textarea
+                          class="form-control bg-gray-850 border-gray-800 bdrd16 color-gray-500"
+                          name="comment"
+                          rows="5"
+                          v-model="content"
+                          v-bind="contentAttrs"
+                          placeholder="Viết bình luận"
+                        ></textarea>
+                        <div class="row mt-20">
+                          <span class="text-danger mt-2">{{ errors.content }}</span>
+                          <div class="col-sm-6 mb-20"></div>
+                          <div class="col-sm-6 text-end">
+                            <button type="submit" class="btn btn-linear">Đăng bình luận</button>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                  <p v-show="comments.length==0" class="no-comment text-base  mt-5">
+                    không có bình luận
+                  </p>
+                  <div
+                    class="list-comments-single"
+                    v-for="comment in comments.slice(0, commentsToShow)"
+                    :key="comment.id"
+                  >
+                    <div class="item-comment">
                       <div class="comment-left">
                         <div class="box-author mb-20">
-                          <img src="assets/imgs/page/single/author.png" alt="Genz" />
+                          <img :src="getMedia(apiBaseUrl, comment?.user?.avatar)" alt="Genz" />
                           <div class="author-info">
                             <h6 class="color-gray-700">{{ comment.user.name }}</h6>
-                            <span class="color-gray-700 text-sm mr-30">{{ formatDate(comment.created_at) }}</span>
+                            <span
+                              class="color-gray-700 text-sm mr-30"
+                              >{{ formatDate(comment.created_at) }}</span
+                            >
                           </div>
                         </div>
                       </div>
                       <div class="comment-right">
                         <div
-                          class="text-comment text-xl color-gray-500 bg-gray-850 border-gray-800"
+                          class="text-comment text-base color-gray-500 bg-gray-850 border-gray-800"
                         >
                           {{ comment.content }}
                         </div>
                         <div class="d-flex justify-content-end">
-                          <button v-show="isLoggedIn" class="btn btn-text color-white-500" @click="enableRelyModel(comment)">Reply</button>
+                          <button
+                            v-show="isLoggedIn"
+                            class="btn btn-text color-white-500"
+                            @click="enableRelyModel(comment)"
+                          >
+                            Reply
+                          </button>
                         </div>
                         <div class="box-forms">
-                    <form @submit.prevent="onSubmit" v-show="reply && selectedComment.id === comment.id">
-                      <textarea
-                        class="form-control bg-gray-850 border-gray-800 bdrd16 color-gray-500"
-                        name="comment"
-                        rows="1"
-                        v-model="content"
-                        v-bind="contentAttrs"
-                        placeholder="Viết bình luận"
-                      ></textarea>
-                      <div class="row mt-20">
-                        <span class="text-danger mt-2">{{ errors.content }}</span>
-                        <div class="col-sm-6 mb-20">
-                        </div>
-                        <div class="col-sm-6 text-end">
-                          <button type="submit" class="btn btn-linear">Đăng bình luận</button>
+                          <form
+                            @submit.prevent="onSubmit"
+                            v-show="reply && selectedComment.id === comment.id"
+                          >
+                            <textarea
+                              class="form-control bg-gray-850 border-gray-800 bdrd16 color-gray-500"
+                              name="comment"
+                              rows="1"
+                              v-model="content"
+                              v-bind="contentAttrs"
+                              placeholder="Viết bình luận"
+                            ></textarea>
+                            <div class="row mt-20">
+                              <span class="text-danger mt-2">{{ errors.content }}</span>
+                              <div class="col-sm-6 mb-20"></div>
+                              <div class="col-sm-6 text-end">
+                                <button type="submit" class="btn btn-linear">Đăng bình luận</button>
+                              </div>
+                            </div>
+                          </form>
                         </div>
                       </div>
-                    </form>
-                  </div>
-                       
-                      </div>
-                     
                     </div>
-                    <div v-show="comment.replies" class="item-comment item-comment-sub" v-for="reply in comment.replies" :key="reply.id">
+                    <div
+                      v-show="comment.replies"
+                      class="item-comment item-comment-sub"
+                      v-for="reply in comment.replies"
+                      :key="reply.id"
+                    >
                       <div class="comment-left">
                         <div class="box-author mb-20">
-                          <img src="assets/imgs/page/single/author3.png" alt="Genz" />
+                          <img :src="getMedia(apiBaseUrl, reply?.user?.avatar)" alt="Genz" />
                           <div class="author-info">
                             <h6 class="color-gray-700">{{ reply.user.name }}</h6>
-                            <span class="color-gray-700 text-sm mr-30">{{formatDate(reply.created_at)}}</span>
+                            <span
+                              class="color-gray-700 text-sm mr-30"
+                              >{{formatDate(reply.created_at)}}</span
+                            >
                           </div>
                         </div>
                       </div>
                       <div class="comment-right">
                         <div
-                          class="text-comment text-xl color-gray-500 bg-gray-850 border-gray-800"
+                          class="text-comment text-base color-gray-500 bg-gray-850 border-gray-800"
                         >
-                         {{reply.content}}
+                          {{reply.content}}
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div class="box-form-comments mb-50" v-show="isLoggedIn">
-                  <h4 class="text-heading-4 color-gray-300 mb-40">Để lại bình luận</h4>
-                  <div class="box-forms">
-                    <form @submit.prevent="onSubmit">
-                      <textarea
-                        class="form-control bg-gray-850 border-gray-800 bdrd16 color-gray-500"
-                        name="comment"
-                        rows="5"
-                        v-model="content"
-                        v-bind="contentAttrs"
-                        placeholder="Viết bình luận"
-                      ></textarea>
-                      <div class="row mt-20">
-                        <span class="text-danger mt-2">{{ errors.content }}</span>
-                        <div class="col-sm-6 mb-20">
-                        </div>
-                        <div class="col-sm-6 text-end">
-                          <button type="submit" class="btn btn-linear">Đăng bình luận</button>
-                        </div>
-                      </div>
-                    </form>
+                  <div class="text-center mt-3" v-if="commentsToShow < totalComments">
+                    <button
+                      @click="loadMoreComments"
+                      class="btn btn-linear d-none d-sm-inline-block d-md-inline-block d-lg-inline-block hover-up"
+                    >
+                      Xem thêm
+                    </button>
                   </div>
                 </div>
               </div>
               <div class="col-lg-3 pl-40">
                 <div class="box-share border-gray-800">
                   <h6 class="d-inline-block color-gray-500 mr-10">Share</h6>
-                  <a class="icon-media icon-fb" href="#"></a
-                  ><a class="icon-media icon-tw" href="#"></a
-                  ><a class="icon-media icon-printest" href="#"></a>
+                  <a
+                    class="icon-media icon-fb"
+                    :href="`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                  </a>
                 </div>
               </div>
             </div>

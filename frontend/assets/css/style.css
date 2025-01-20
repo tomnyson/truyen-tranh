@@ -1578,10 +1578,10 @@ input {
   height: 100%;
   width: 100%;
   border-radius: 8px;
-  background: url(../imgs/page/homepage1/bg-trans.png) repeat-x left bottom;
+  /* background: url(../imgs/page/homepage1/bg-trans.png) repeat-x left bottom; */
 }
 .card-style-1 .card-image .card-info.card-bg-2 {
-  background: url(../imgs/page/homepage3/bg-trans.png) repeat-x left bottom;
+  /* background: url(../imgs/page/homepage3/bg-trans.png) repeat-x left bottom; */
 }
 .card-style-1 .card-image .card-info .info-bottom {
   position: absolute;
@@ -6909,3 +6909,9 @@ iframe.google-map {
   margin-bottom: 15px;
 }
 /*# sourceMappingURL=style.css.map */
+
+.card-style-1 .card-image img {
+  width: 100%;
+  height: 300px;
+  border-radius: 8px;
+}

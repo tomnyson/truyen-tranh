@@ -8,7 +8,7 @@
     >
       <div class="card-image hover-up">
         <NuxtLink :to="`/blog/${item.id}`">
-          <img :src="`${IMAGE_URL}/storage/${item.image}`" :alt="item.title" />
+          <img :src="`${getMedia(apiBaseUrl, item.image)}`" :alt="item.title" />
         </NuxtLink>
       </div>
       <div class="card-info">
@@ -29,8 +29,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import {formatDate, IMAGE_URL, truncatedContent} from '@/utils/index'
-
+import {formatDate, getMedia, truncatedContent} from '@/utils/index'
+const config = useRuntimeConfig();
+const apiBaseUrl = config.public.apiBaseUrl;
 interface Tag {
   id: number
   name: string
@@ -54,7 +55,7 @@ const popularPosts = computed(() => {
   // Safely handle cases where props.posts might be undefined or null
   return (props.posts || []).slice(0, 5);
 });
-
+const image_url = process.env.VUE_APP_STATIC_URL
 </script>
 
 <style scoped>

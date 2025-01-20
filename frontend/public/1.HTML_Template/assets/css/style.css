@@ -1581,7 +1581,7 @@ input {
   background: url(../imgs/page/homepage1/bg-trans.png) repeat-x left bottom;
 }
 .card-style-1 .card-image .card-info.card-bg-2 {
-  background: url(../imgs/page/homepage3/bg-trans.png) repeat-x left bottom;
+  /* background: url(../imgs/page/homepage3/bg-trans.png) repeat-x left bottom; */
 }
 .card-style-1 .card-image .card-info .info-bottom {
   position: absolute;

@@ -15,9 +15,11 @@
         border-radius: 8px;
         overflow: hidden;
         position: relative;
+        height: 300px !important;
         img {
             width: 100%;
             border-radius: 8px;
+            height: 300px;
         }
         .link-post {
             &:hover {
@@ -32,9 +34,9 @@
             height: 100%;
             width: 100%;
             border-radius: 8px;
-            background: url(../imgs/page/homepage1/bg-trans.png) repeat-x left bottom;
+            // background: url(../imgs/page/homepage1/bg-trans.png) repeat-x left bottom;
             &.card-bg-2 {
-                background: url(../imgs/page/homepage3/bg-trans.png) repeat-x left bottom;
+                // background: url(../imgs/page/homepage3/bg-trans.png) repeat-x left bottom;
             }
             .info-bottom {
                 position: absolute;

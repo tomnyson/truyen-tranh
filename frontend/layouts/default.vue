@@ -44,4 +44,9 @@ const { data: settings, status: settingStatus, error: settingError } = await use
 
 <style scoped>
 /* Add scoped styles here if needed */
+.card-style-1 .card-image img {
+    width: 100%;
+    border-radius: 8px;
+    height: 300px !important;
+}
 </style>

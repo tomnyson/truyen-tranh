@@ -3,6 +3,9 @@ import { ref, computed } from 'vue'
 import ProfilePost from '~/components/ProfilePosts.vue';
 import { toast } from 'vue3-toastify';
 import Loading from '~/components/Loading.vue';
+import { getMedia } from '~/utils';
+const config = useRuntimeConfig();
+const apiBaseUrl = config.public.apiBaseUrl;
 
 definePageMeta({ layout: 'default', auth: true, title: 'Thông tin cá nhân' });
 
@@ -21,12 +24,13 @@ const setActiveTab = (tab: string) => {
   activeTab.value = tab;
 };
 
-
+console.log('session.value',session.value)
 const profileData = ref({
-  avatar: '',
-  introduction: '',
+  avatar: getMedia(apiBaseUrl, session.value?.user.avatar) ||'',
+  introduction: session.value?.user.intro || '',
   name: session.value?.user.name || '',
   email: session.value?.user.email || '',
+
   socialLinks: [
     { icon: '', url: '' },
   ],
@@ -81,7 +85,7 @@ const saveProfile = async () => {
     }
 
     // Make the fetch request
-    const response = await fetch('/api/profile', {
+    const response = await fetch(`${apiBaseUrl}/api/profile`, {
       method: 'POST',
       headers: {
         Authorization: token.value ? `${token.value}` : undefined, // Include Authorization header
@@ -157,7 +161,7 @@ const saveProfile = async () => {
                 <div class="mb-4">
                   <label class="form-label">Avatar:</label>
                   <div class="avatar-preview">
-                    <img :src="avatarPreview || author?.avatar || '/default-avatar.png'" alt="Avatar"
+                    <img :src="avatarPreview || profileData?.avatar || '/default-avatar.png'" alt="Avatar"
                       class="avatar-image" />
                     <label for="avatar" class="icon-upload">
                       <Icon name="ep:circle-plus" style="color: #5a5a5a; cursor: pointer;" size="30" />
@@ -176,9 +180,6 @@ const saveProfile = async () => {
                   <input  autocomplete="off" readonly type="text" id="email" v-model="profileData.email" class="form-control" rows="3"
                     placeholder="Nhập email của bạn.">
                 </div>
-
-
-
                 <!-- Introduction Text -->
                 <div class="mb-4">
                   <label for="introduction" class="form-label">Giới thiệu:</label>
@@ -216,8 +217,7 @@ const saveProfile = async () => {
               </div>
             </div>
             <div v-if="activeTab === 'new-post'">
-              <h1>Thêm bài viết mới</h1>
-              <p>Form content goes here...</p>
+              <p>Comming soon</p>
             </div>
           </div>
         </div>
