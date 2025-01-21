@@ -3,7 +3,6 @@
       <div 
         v-if="modelValue" 
         class="modal-overlay"
-        @click.self="closeModal"
       >
         <div 
           class="modal-container" 

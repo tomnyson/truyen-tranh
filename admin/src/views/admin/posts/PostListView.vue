@@ -260,7 +260,7 @@
       images_reuse_filename: true,
       convert_urls: false,
       file_picker_types: 'file image media',
-      images_upload_url: 'http://localhost:8000/api/media/upload',
+      images_upload_url: `${BASE_URL}/api/media/upload`,
       images_upload_handler: images_upload_handler,
       // Additional recommended settings
       menubar: true,
@@ -381,7 +381,7 @@ import axios from 'axios';
 ----------------------------- */
 const image_url = process.env.VUE_APP_STATIC_URL;
 const VUE_API_EDITOR_KEY = process.env.VUE_APP_EDITOR_KEY;
-
+const BASE_URL = process.env.VUE_APP_BASE;
 const statusArr = [
   { label: 'draft', value: 'draft' },
   { label: 'review', value: 'review' },
@@ -624,7 +624,7 @@ async function images_upload_handler(blobInfo) {
       }
 
       const response = await axios.post(
-        'http://localhost:8000/api/media/upload',
+        `${process.env.VUE_APP_BASE}/api/media/upload`  || 'http://localhost:8000/api/media/upload',
         formData,
         {
           headers: {
@@ -682,6 +682,7 @@ async function images_upload_handler(blobInfo) {
 function handleClose() {
   resetForm();
 }
+console.log('process.env.VUE_APP_BASE',process.env.VUE_APP_BASE)
 
 function resetForm() {
   title.value = '';
