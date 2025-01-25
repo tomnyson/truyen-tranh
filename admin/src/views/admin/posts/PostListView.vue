@@ -252,7 +252,8 @@
         'table',
         'code',
         'help',
-        'wordcount'
+        'wordcount',
+        'media'
       ],
       toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link image',
       automatic_uploads: true,
@@ -266,7 +267,11 @@
       menubar: true,
       relative_urls: false,
       remove_script_host: false,
-      extended_valid_elements: 'img[class|src|border=0|alt|title|width|height|style]',
+      extended_valid_elements:
+  'iframe[src|frameborder|allowfullscreen|width|height|name|align],' +
+  'video[controls|preload|width|height|data-setup],' +
+  'source[src|type],' +
+  'img[class|src|border=0|alt|title|width|height|style]',
       image_dimensions: false,
       // Better image sizing defaults
       image_advtab: true,

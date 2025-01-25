@@ -5,6 +5,8 @@ import { useAuth } from '#imports';
 import { useForm } from "vee-validate";
 import * as yup from "yup";
 import { toast } from 'vue3-toastify';
+import DOMPurify from 'dompurify'
+
 const config = useRuntimeConfig();
 const apiBaseUrl = config.public.apiBaseUrl;
 
@@ -163,7 +165,14 @@ const totalComments = computed(() => comments.value.length);
 const loadMoreComments = () => {
   commentsToShow.value += 10; // Increment the number of comments shown
 };
-const shareUrl = computed(() => `${window.location.origin}/blog/${postId.value}`);
+const shareUrl = computed(() => `${window?.location?.origin}/blog/${postId.value}`);
+
+const configContent = {
+  ALLOWED_TAGS: ['iframe', 'p', 'div', 'span', /* etc. */],
+  ALLOWED_ATTR: ['src', 'width', 'height', 'frameborder', 'allowfullscreen']
+}
+// console.log(safeHTML)
+// Then store in post.content
 </script>
 
 <template>
@@ -176,7 +185,7 @@ const shareUrl = computed(() => `${window.location.origin}/blog/${postId.value}`
             <div class="pt-30 border-bottom border-gray-800 pb-20">
               <div class="box-breadcrumbs">
                 <ul class="breadcrumb">
-                  <li><a class="home" href="index.html">Home</a></li>
+                  <li><a class="home" href="#">Home</a></li>
                   <li>
                     <span>{{ post?.title || 'unknow' }}</span>
                   </li>
@@ -209,7 +218,7 @@ const shareUrl = computed(() => `${window.location.origin}/blog/${postId.value}`
             <div class="row mt-50">
               <div class="col-lg-9">
                 <div class="content-detail border-gray-800">
-                  <div v-html="post?.content"></div>
+                    <div v-html="post?.content"></div>
                 </div>
                 <div class="box-tags">
                   <NuxtLink
@@ -369,5 +378,8 @@ const shareUrl = computed(() => `${window.location.origin}/blog/${postId.value}`
   border-radius: 5px;
   text-align: center;
   margin-top: 10px;
+}
+a {
+  
 }
 </style>

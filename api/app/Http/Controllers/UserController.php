@@ -177,7 +177,7 @@ public function updateMyProfile(Request $request)
     }
 
     // Update other fields
-    $user->name = $validatedData['name'];
+    $user->name = $validatedData['name'] ?? $user->name; // Keep existing value if not provided
     $user->intro = $validatedData['intro'] ?? $user->intro; // Keep existing value if not provided
     $user->social = $validatedData['social'] ?? $user->social;
 
